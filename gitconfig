@@ -1,0 +1,29 @@
+[user]
+	email = carlos.sadhu@gmail.com
+	name = Carlos Rojas
+[alias]
+	ci = commit
+	st = status
+	br = branch
+	co = checkout
+	unstage = reset HEAD --
+	last = log -1 HEAD
+	visual = !gitk
+
+	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+	type = cat-file -t
+	dump = cat-file -p
+
+	dci = duet-commit
+	drv = duet-revert
+	dmg = duet-merge
+	drb = rebase -i --exec 'git duet-commit --amend --reset-author'
+
+	dpull = "!git fetch origin $(git rev-parse --abbrev-ref HEAD); git reset --hard FETCH_HEAD; git clean -fd; git log -1 | grep wip && git reset --soft HEAD^; git reset HEAD"
+[push]
+	default = simple
+[github]
+	user = sadhu89
+[core]
+	autocrlf = input
+	safecrlf = true
