@@ -79,13 +79,49 @@
 ;; revert buffers automatically when underlying files are changed externally
 (global-auto-revert-mode t)
 
-(prefer-coding-system 'utf-8)
+(prefer-coding-system       'utf-8)
 (set-default-coding-systems 'utf-8)
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 
+;; hippie expand is dabbrev expand on steroids
+(setq hippie-expand-try-functions-list '(try-expand-dabbrev
+                                         try-expand-dabbrev-all-buffers
+                                         try-expand-dabbrev-from-kill
+                                         try-complete-file-name-partially
+                                         try-complete-file-name
+                                         try-expand-all-abbrevs
+                                         try-expand-list
+                                         try-expand-line
+                                         try-complete-lisp-symbol-partially
+                                         try-complete-lisp-symbol))
+
+;; use hippie-expand instead of dabbrev
+(global-set-key (kbd "M-/") #'hippie-expand)
+
+;; replace buffer-menu with ibuffer
+(global-set-key (kbd "C-x C-b") #'ibuffer)
+
+;; align code in a pretty way
+(global-set-key (kbd "C-x \\") #'align-regexp)
+
+;; extend the help commands
+(define-key 'help-command (kbd "C-f") #'find-function)
+(define-key 'help-command (kbd "C-k") #'find-function-on-key)
+(define-key 'help-command (kbd "C-v") #'find-variable)
+(define-key 'help-command (kbd "C-l") #'find-library)
+
+(define-key 'help-command (kbd "C-i") #'info-display-manual)
+
+;; smart tab behavior - indent or complete
+(setq tab-always-indent 'complete)
+
 ; don't ask for confirmation when opening symlinked file
 (setq vc-follow-symlinks t )
+
+; When you visit a file, point goes to the last place where it was
+; when you previously visited the same file.
+(save-place-mode 1)
 
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
@@ -131,7 +167,7 @@
   (global-set-key (kbd "C-c C-r") 'ivy-resume)
   (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "C-c k") 'counsel-rg))
+  (global-set-key (kbd "C-r") 'counsel-rg))
 
 (use-package doom-themes
   :ensure t
@@ -155,7 +191,9 @@
 
 (use-package projectile
   :ensure t
-  :diminish (projectile-mode . "Pjtl");; diminish projectile mode to work around https://github.com/bbatsov/projectile/issues/1183
+  :diminish (projectile-mode . "Pjtl");; diminish projectile mode to
+                                      ;; work around
+                                      ;; https://github.com/bbatsov/projectile/issues/1183
   :config
   (projectile-global-mode +1)
   (setq projectile-completion-system 'ivy))
@@ -168,10 +206,65 @@
   :ensure t
   :bind ("C-=" . er/expand-region))
 
+(use-package paren
+  :config
+  (show-paren-mode +1))
+
+(use-package uniquify
+  :config
+  (setq uniquify-buffer-name-style 'forward)
+  (setq uniquify-separator "/")
+  ;; rename after killing uniquified
+  (setq uniquify-after-kill-buffer-p t)
+  ;; don't muck with special buffers
+  (setq uniquify-ignore-buffers-re "^\\*"))
+
+(use-package move-text
+  :ensure t
+  :bind
+  (([(meta shift up)] . move-text-up)
+   ([(meta shift down)] . move-text-down)))
+
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+
+(use-package rainbow-mode
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-mode))
+
+(use-package whitespace
+  :init
+  (dolist (hook '(prog-mode-hook text-mode-hook))
+    (add-hook hook #'whitespace-mode))
+  (add-hook 'before-save-hook #'whitespace-cleanup)
+  :config
+  (setq whitespace-line-column 80) ;; limit line length
+  (setq whitespace-style '(face tabs empty trailing lines-tail)))
+
+(use-package diff-hl
+  :ensure t
+  :config
+  (global-diff-hl-mode +1)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+
 (use-package which-key
   :ensure t
   :config
   (which-key-mode +1))
+
+(use-package undo-tree
+  :ensure t
+  :diminish undo-tree-mode
+  :config
+  ;; autosave the undo-tree history
+  (setq undo-tree-history-directory-alist
+        `((".*" . ,temporary-file-directory)))
+  (setq undo-tree-auto-save-history t)
+  (global-undo-tree-mode))
 
 (use-package crux
   :ensure t
@@ -260,9 +353,9 @@
 (use-package rspec-mode
   :ensure t
   :bind* (("C-c , r" . rspec-rerun))
-  :config 
+  :config
   (setq rspec-primary-source-dirs '("app")))
-  
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -271,7 +364,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
+    (rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
