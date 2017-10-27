@@ -45,6 +45,8 @@
 (column-number-mode t)
 (size-indication-mode t)
 
+(add-hook 'prog-mode-hook 'linum-mode)
+
 ;; enable y/n answers
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -84,6 +86,34 @@
 
 ; don't ask for confirmation when opening symlinked file
 (setq vc-follow-symlinks t )
+
+(global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+(global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
+(defun save-buffers-kill-emacs-only-in-console ()
+  "In a GUI environment, do nothing; otherwise `save-buffers-kill-emacs`."
+  (interactive)
+  (if (display-graphic-p)
+      (message "save-buffers-kill-emacs disabled for graphical displays.")
+    (save-buffers-kill-emacs)))
+
+(defun suspend-frame-only-in-console ()
+  "In a GUI environment, do nothing; otherwise `suspend-frame'."
+  (interactive)
+  (if (display-graphic-p)
+      (message "suspend-frame disabled for graphical displays.")
+    (suspend-frame)))
+
+(global-unset-key (kbd "C-x C-c"))
+(global-unset-key (kbd "C-z"))
+(global-set-key (kbd "C-x C-c") 'save-buffers-kill-emacs-only-in-console)
+(global-set-key (kbd "C-z") 'suspend-frame-only-in-console)
+
+(setq special-display-buffer-names '("*rspec-compilation*" "*guard*"))
+
+(setq initial-major-mode 'enh-ruby-mode)
+
+(setq initial-scratch-message nil)
 
 
 (unless (package-installed-p 'use-package)
@@ -125,6 +155,7 @@
 
 (use-package projectile
   :ensure t
+  :diminish (projectile-mode . "Pjtl");; diminish projectile mode to work around https://github.com/bbatsov/projectile/issues/1183
   :config
   (projectile-global-mode +1)
   (setq projectile-completion-system 'ivy))
@@ -173,7 +204,6 @@
 
 (use-package treemacs
   :ensure t
-  :defer t
   :config
   (setq treemacs-follow-after-init          t
           treemacs-width                      35
@@ -197,12 +227,42 @@
         ("s-t c"  . treemacs)
         ("s-t f"  . treemacs-find-file)))
 (use-package treemacs-projectile
-  :defer t
   :ensure t
   :config
   (setq treemacs-header-function #'treemacs-projectile-create-header)
   :bind (:map global-map
               ([f8]  . treemacs-projectile-toggle)))
+
+(use-package enh-ruby-mode
+  :ensure t
+  :mode (("Appraisals\\'" . enh-ruby-mode)
+         ("\\(Rake\\|Thor\\|Guard\\|Gem\\|Cap\\|Vagrant\\|Berks\\|Pod\\|Puppet\\)file\\'" . enh-ruby-mode)
+         ("\\.\\(rb\\|rabl\\|ru\\|builder\\|rake\\|thor\\|gemspec\\|jbuilder\\)\\'" . enh-ruby-mode))
+  :interpreter "ruby"
+  :init
+  (progn
+    (setq enh-ruby-deep-indent-paren nil
+          enh-ruby-hanging-paren-deep-indent-level 2
+          ruby-insert-encoding-magic-comment nil)))
+
+(use-package inf-ruby
+  :ensure t
+  :config
+  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
+  (add-hook 'compilation-filter-hook 'inf-ruby-auto-enter)
+  (setq company-global-modes '(not inf-ruby-mode)))
+
+(use-package rubocop
+  :ensure t
+  :config
+  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode))
+
+(use-package rspec-mode
+  :ensure t
+  :bind* (("C-c , r" . rspec-rerun))
+  :config 
+  (setq rspec-primary-source-dirs '("app")))
+  
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -211,7 +271,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
+    (rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
