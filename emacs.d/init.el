@@ -348,6 +348,7 @@
      :map region-bindings-mode-map
      ("<C-SPC>" . sadhu/disable-rbm-deactivate-mark))))
 
+; Based on https://github.com/kaushalmodi/.emacs.d/blob/2cfc01ce68dd3e58b707a2c4c8028b7e5d53cd8c/setup-files/setup-multiple-cursors.el#L13-L26
 (use-package multiple-cursors
   :ensure t
   :bind (("C-S-c C-S-c" . mc/edit-lines)
@@ -356,19 +357,21 @@
          ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-<mouse-1>" . mc/add-cursor-on-click))
   :bind (:map region-bindings-mode-map
-         ("a"  . mc/mark-all-like-this)
-         ("p"  . mc/mark-previous-like-this)
-         ("n"  . mc/mark-next-like-this)
-         ("P"  . mc/unmark-previous-like-this)
-         ("N"  . mc/unmark-next-like-this)
-         ("["  . mc/cycle-backward)
-         ("]"  . mc/cycle-forward)
-         ("m"  . mc/mark-more-like-this-extended)
-         ("h"  . mc-hide-unmatched-lines-mode)
-         ("\\" . mc/vertical-align-with-space)
-         ("#"  . mc/insert-numbers) ; use num prefix to set the starting number
-         ("^"  . mc/edit-beginnings-of-lines)
-         ("$"  . mc/edit-ends-of-lines)))
+         ("a"   . mc/mark-all-like-this)
+         ("p"   . mc/mark-previous-like-this)
+         ("M-p" . mc/skip-to-previous-like-this)
+         ("n"   . mc/mark-next-like-this)
+         ("M-n" . mc/skip-to-next-like-this)
+         ("P"   . mc/unmark-previous-like-this)
+         ("N"   . mc/unmark-next-like-this)
+         ("["   . mc/cycle-backward)
+         ("]"   . mc/cycle-forward)
+         ("m"   . mc/mark-more-like-this-extended)
+         ("h"   . mc-hide-unmatched-lines-mode)
+         ("\\"  . mc/vertical-align-with-space)
+         ("#"   . mc/insert-numbers) ; use num prefix to set the starting number
+         ("^"   . mc/edit-beginnings-of-lines)
+         ("$"   . mc/edit-ends-of-lines)))
 
 (use-package enh-ruby-mode
   :ensure t
