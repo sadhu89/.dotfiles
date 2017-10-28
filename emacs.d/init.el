@@ -326,6 +326,50 @@
   :bind (:map global-map
               ([f8]  . treemacs-projectile-toggle)))
 
+(use-package region-bindings-mode
+  :config
+  (progn
+    ;; Do not activate `region-bindings-mode' in Special modes like `dired' and
+    ;; `ibuffer'. Single-key bindings like 'm' are useful in those modes even
+    ;; when a region is selected.
+    (setq region-bindings-mode-disabled-modes '(dired-mode
+                                                ibuffer-mode))
+
+    (region-bindings-mode-enable)
+
+    (defun sadhu/disable-rbm-deactivate-mark ()
+      "Disable `region-bindings-mode' and deactivate mark."
+      (interactive)
+      (region-bindings-mode -1)
+      (deactivate-mark)
+      (message "Mark deactivated"))
+
+    (bind-keys
+     :map region-bindings-mode-map
+     ("<C-SPC>" . sadhu/disable-rbm-deactivate-mark))))
+
+(use-package multiple-cursors
+  :ensure t
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)
+         ("C-S-<mouse-1>" . mc/add-cursor-on-click))
+  :bind (:map region-bindings-mode-map
+         ("a"  . mc/mark-all-like-this)
+         ("p"  . mc/mark-previous-like-this)
+         ("n"  . mc/mark-next-like-this)
+         ("P"  . mc/unmark-previous-like-this)
+         ("N"  . mc/unmark-next-like-this)
+         ("["  . mc/cycle-backward)
+         ("]"  . mc/cycle-forward)
+         ("m"  . mc/mark-more-like-this-extended)
+         ("h"  . mc-hide-unmatched-lines-mode)
+         ("\\" . mc/vertical-align-with-space)
+         ("#"  . mc/insert-numbers) ; use num prefix to set the starting number
+         ("^"  . mc/edit-beginnings-of-lines)
+         ("$"  . mc/edit-ends-of-lines)))
+
 (use-package enh-ruby-mode
   :ensure t
   :mode (("Appraisals\\'" . enh-ruby-mode)
@@ -364,7 +408,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
+    (region-bindings-mode multiple-cursors rainbow-identifiers color-identifiers-mode rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
