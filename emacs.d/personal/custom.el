@@ -86,8 +86,7 @@
   (define-key mc/keymap (kbd "C-,") 'mc/unmark-next-like-this)
   (define-key mc/keymap (kbd "C-.") 'mc/skip-to-next-like-this))
 
-(global-unset-key (kbd "M-<down-mouse-1>"))
-(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
+(global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
 
 (global-set-key [remap other-window] 'ace-window)
 
@@ -214,7 +213,6 @@
 (setq enh-ruby-deep-indent-paren nil)
 (setq enh-ruby-hanging-paren-deep-indent-level 2)
 ;; don't insert utf-8 encoding comments in file header
-(setq ruby-insert-encoding-magic-comment nil)
 
 ;; values to have a look in the future
 ;; (setq ruby-deep-indent-paren nil)
@@ -231,8 +229,8 @@
 ;; (setq enh-ruby-bounce-deep-indent t)
 
 (remove-hook 'enh-ruby-mode-hook 'erm-define-faces)
-(add-to-list 'auto-mode-alist
-             '("\\(?:\\.rb\\|ru\\|rake\\|thor\\|jbuilder\\|gemspec\\|podspec\\|/\\(?:Gem\\|Rake\\|Cap\\|Thor\\|Vagrant\\|Guard\\|Pod\\)file\\)\\'" . enh-ruby-mode))
+;; (add-to-list 'auto-mode-alist
+;;              '("\\(?:\\.rb\\|ru\\|rake\\|thor\\|jbuilder\\|gemspec\\|podspec\\|/\\(?:Gem\\|Rake\\|Cap\\|Thor\\|Vagrant\\|Guard\\|Pod\\)file\\)\\'" . enh-ruby-mode))
 (add-hook 'enh-ruby-mode-hook (lambda ()
                                 (run-hooks 'prelude-ruby-mode-hook)))
 (add-hook 'enh-ruby-mode-hook #'rubocop-mode)
@@ -273,9 +271,9 @@
   (treemacs-filewatch-mode t)
   :bind
   (:map global-map
-        ([f8]        . treemacs-toggle)
-        ("M-0"       . treemacs-select-window)
-        ("C-c 1"     . treemacs-delete-other-windows)
+        ([f8]     . treemacs-toggle)
+        ("M-0"    . treemacs-select-window)
+        ("C-c 1"  . treemacs-delete-other-windows)
         ("s-t c"  . treemacs)
         ("s-t p"  . treemacs-projectile)
         ("s-t f"  . treemacs-find-file)))
@@ -286,7 +284,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (sass-mode elixir-mode pdf-tools robe rvm dired+ wgrep zop-to-char zenburn-theme yasnippet yari yaml-mode which-key web-mode volatile-highlights vimgolf use-package transpose-frame sml-mode smartrep smartparens smart-mode-line slack shackle scss-mode ruby-tools ruby-refactor rubocop rspec-mode rainbow-mode ov org-tree-slide org-bullets operate-on-number multiple-cursors move-text markdown-mode magit key-chord json-mode js2-mode inf-ruby imenu-anywhere helm-spotify-plus helm-projectile helm-open-github helm-descbinds helm-ag haskell-mode haml-mode guru-mode grizzl god-mode gitignore-mode github-browse-file gitconfig-mode git-timemachine gist flycheck fancy-narrow expand-region evil-visualstar evil-tutor evil-surround evil-numbers eshell-git-prompt enh-ruby-mode elm-mode el-get editorconfig easy-kill dumb-jump discover-my-major diff-hl demo-it d-mode csv-mode crux counsel-projectile company color-theme-sanityinc-tomorrow coffee-mode browse-kill-ring beacon anzu all-the-icons ag ace-window 0xc))))
+    (feature-mode color-identifiers-mode sass-mode elixir-mode pdf-tools robe rvm dired+ wgrep zop-to-char zenburn-theme yasnippet yari yaml-mode which-key web-mode volatile-highlights vimgolf use-package transpose-frame sml-mode smartrep smartparens smart-mode-line slack shackle scss-mode ruby-tools ruby-refactor rubocop rspec-mode rainbow-mode ov org-tree-slide org-bullets operate-on-number multiple-cursors move-text markdown-mode magit key-chord json-mode js2-mode inf-ruby imenu-anywhere helm-spotify-plus helm-projectile helm-open-github helm-descbinds helm-ag haskell-mode haml-mode guru-mode grizzl god-mode gitignore-mode github-browse-file gitconfig-mode git-timemachine gist flycheck fancy-narrow expand-region evil-visualstar evil-tutor evil-surround evil-numbers eshell-git-prompt enh-ruby-mode elm-mode el-get editorconfig easy-kill dumb-jump discover-my-major diff-hl demo-it d-mode csv-mode crux counsel-projectile company color-theme-sanityinc-tomorrow coffee-mode browse-kill-ring beacon anzu all-the-icons ag ace-window 0xc))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -367,12 +365,10 @@ With a prefix argument ARG, find the `user-init-file' instead."
                         "http://music.trikeapps.com/restart_music")
     (kill-buffer)
     (message "Music restarted. You monster")))
-
-
-(global-set-key (kbd "s-m n") 'trike-music-next)
-(global-set-key (kbd "s-m s") 'trike-music-stop)
-(global-set-key (kbd "s-m r") 'trike-music-restart)
-(global-set-key (kbd "s-m c") 'trike-music-current)
+(global-set-key (kbd "H-t n") 'trike-music-next)
+(global-set-key (kbd "H-t s") 'trike-music-stop)
+(global-set-key (kbd "H-t r") 'trike-music-restart)
+(global-set-key (kbd "H-t c") 'trike-music-current)
 
 (defun save-buffers-kill-emacs-only-in-console ()
   "In a GUI environment, do nothing; otherwise `save-buffers-kill-emacs`."
@@ -424,3 +420,9 @@ With a prefix argument ARG, find the `user-init-file' instead."
    ("d" ,(reloading #'confirm-delete-file) "delete")
    ("m" ,(reloading (given-file #'rename-file "Move")) "move")
    ("b" counsel-find-file-cd-bookmark-action "cd bookmark")))
+
+(global-set-key (kbd "H-p") 'projectile-command-map)
+
+
+(setq ruby-insert-encoding-magic-comment nil)
+(setq default-frame-alist '((font . "Source Code Pro-9")))

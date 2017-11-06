@@ -140,6 +140,12 @@
       (message "suspend-frame disabled for graphical displays.")
     (suspend-frame)))
 
+(use-package xterm-color
+  :config
+  (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter)
+  (setq comint-output-filter-functions (remove 'ansi-color-process-output comint-output-filter-functions))
+  (setq font-lock-unfontify-region-function 'xterm-color-unfontify-region))
+
 (global-unset-key (kbd "C-x C-c"))
 (global-unset-key (kbd "C-z"))
 (global-set-key (kbd "C-x C-c") 'save-buffers-kill-emacs-only-in-console)
@@ -147,7 +153,8 @@
 
 (setq special-display-buffer-names '("*rspec-compilation*" "*guard*"))
 
-(setq initial-major-mode 'enh-ruby-mode)
+(setq initial-major-mode 'ruby-mode)
+(setq ruby-insert-encoding-magic-comment nil)
 
 (setq initial-scratch-message nil)
 
@@ -165,6 +172,7 @@
   (setq ivy-use-virtual-buffers t)
   (global-set-key "\C-s" 'swiper)
   (global-set-key (kbd "C-c C-r") 'ivy-resume)
+  (global-set-key (kbd "<f6>") 'ivy-resume)
   (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
   (global-set-key (kbd "C-r") 'counsel-rg))
@@ -196,7 +204,8 @@
                                       ;; https://github.com/bbatsov/projectile/issues/1183
   :config
   (projectile-global-mode +1)
-  (setq projectile-completion-system 'ivy))
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-switch-project-action 'projectile-dired))
 
 (use-package counsel-projectile
   :ensure t
@@ -205,6 +214,14 @@
 (use-package expand-region
   :ensure t
   :bind ("C-=" . er/expand-region))
+
+(use-package smartparens
+  :ensure t
+  :diminish smartparens-mode
+  :config
+  (progn
+    (require 'smartparens-config)
+    (smartparens-global-mode 1)))
 
 (use-package paren
   :config
@@ -224,6 +241,12 @@
   :bind
   (([(meta shift up)] . move-text-up)
    ([(meta shift down)] . move-text-down)))
+
+(use-package ace-window
+  :ensure t
+  :bind ("C-x o" . ace-window)
+  :config
+  (setq aw-scope 'frame))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -277,8 +300,8 @@
          ("C-c e" . crux-eval-and-replace)
          ("C-c w" . crux-swap-windows)
          ("C-c D" . crux-delete-file-and-buffer)
+         ("C-c d" . crux-duplicate-current-line-or-region)
          ("C-c r" . crux-rename-buffer-and-file)
-         ("C-c t" . crux-visit-term-buffer)
          ("C-c k" . crux-kill-other-buffers)
          ("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
          ("C-c I" . crux-find-user-init-file)
@@ -326,52 +349,48 @@
   :bind (:map global-map
               ([f8]  . treemacs-projectile-toggle)))
 
-(use-package region-bindings-mode
-  :config
-  (progn
-    ;; Do not activate `region-bindings-mode' in Special modes like `dired' and
-    ;; `ibuffer'. Single-key bindings like 'm' are useful in those modes even
-    ;; when a region is selected.
-    (setq region-bindings-mode-disabled-modes '(dired-mode
-                                                ibuffer-mode))
-
-    (region-bindings-mode-enable)
-
-    (defun sadhu/disable-rbm-deactivate-mark ()
-      "Disable `region-bindings-mode' and deactivate mark."
-      (interactive)
-      (region-bindings-mode -1)
-      (deactivate-mark)
-      (message "Mark deactivated"))
-
-    (bind-keys
-     :map region-bindings-mode-map
-     ("<C-SPC>" . sadhu/disable-rbm-deactivate-mark))))
-
-; Based on https://github.com/kaushalmodi/.emacs.d/blob/2cfc01ce68dd3e58b707a2c4c8028b7e5d53cd8c/setup-files/setup-multiple-cursors.el#L13-L26
 (use-package multiple-cursors
   :ensure t
   :bind (("C-S-c C-S-c" . mc/edit-lines)
          ("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
          ("C-c C-<" . mc/mark-all-like-this)
-         ("C-S-<mouse-1>" . mc/add-cursor-on-click))
-  :bind (:map region-bindings-mode-map
-         ("a"   . mc/mark-all-like-this)
-         ("p"   . mc/mark-previous-like-this)
-         ("M-p" . mc/skip-to-previous-like-this)
-         ("n"   . mc/mark-next-like-this)
-         ("M-n" . mc/skip-to-next-like-this)
-         ("P"   . mc/unmark-previous-like-this)
-         ("N"   . mc/unmark-next-like-this)
-         ("["   . mc/cycle-backward)
-         ("]"   . mc/cycle-forward)
-         ("m"   . mc/mark-more-like-this-extended)
-         ("h"   . mc-hide-unmatched-lines-mode)
-         ("\\"  . mc/vertical-align-with-space)
-         ("#"   . mc/insert-numbers) ; use num prefix to set the starting number
-         ("^"   . mc/edit-beginnings-of-lines)
-         ("$"   . mc/edit-ends-of-lines)))
+         ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
+  ;; :bind (:map region-bindings-mode-map
+  ;;        ("a"   . mc/mark-all-like-this)
+  ;;        ("p"   . mc/mark-previous-like-this)
+  ;;        ("M-p" . mc/skip-to-previous-like-this)
+  ;;        ("n"   . mc/mark-next-like-this)
+  ;;        ("M-n" . mc/skip-to-next-like-this)
+  ;;        ("P"   . mc/unmark-previous-like-this)
+  ;;        ("N"   . mc/unmark-next-like-this)
+  ;;        ("["   . mc/cycle-backward)
+  ;;        ("]"   . mc/cycle-forward)
+  ;;        ("m"   . mc/mark-more-like-this-extended)
+  ;;        ("h"   . mc-hide-unmatched-lines-mode)
+  ;;        ("\\"  . mc/vertical-align-with-space)
+  ;;        ("#"   . mc/insert-numbers) ; use num prefix to set the starting number
+  ;;        ("^"   . mc/edit-beginnings-of-lines)
+  ;;        ("$"   . mc/edit-ends-of-lines)))
+
+(use-package cliphist
+  :ensure t
+  :config
+  (setq cliphist-use-ivy t)
+  :bind* ("M-y" . cliphist-paste-item))
+
+(use-package multi-term
+  :ensure t
+  :bind ("C-c t" . multi-term))
+
+(use-package dumb-jump
+  :ensure t
+  :bind (("M-g o" . dumb-jump-go-other-window)
+         ("M-g j" . dumb-jump-go)
+         ("M-g i" . dumb-jump-go-prompt)
+         ("M-g x" . dumb-jump-go-prefer-external)
+         ("M-g z" . dumb-jump-go-prefer-external-other-window))
+  :config (setq dumb-jump-selector 'ivy))
 
 (use-package enh-ruby-mode
   :ensure t
@@ -382,27 +401,61 @@
   :init
   (progn
     (setq enh-ruby-deep-indent-paren nil
-          enh-ruby-hanging-paren-deep-indent-level 2
-          ruby-insert-encoding-magic-comment nil)))
+          enh-ruby-hanging-paren-deep-indent-level 2)))
 
 (use-package inf-ruby
   :ensure t
   :config
   (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
+  (add-hook 'ruby-mode-hook #'inf-ruby-minor-mode)
   (add-hook 'compilation-filter-hook 'inf-ruby-auto-enter)
   (setq company-global-modes '(not inf-ruby-mode)))
 
 (use-package rubocop
   :ensure t
   :config
-  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode))
+  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
+  (add-hook 'ruby-mode-hook #'inf-ruby-minor-mode))
 
 (use-package rspec-mode
   :ensure t
-  :bind* (("C-c , r" . rspec-rerun))
+  :bind*
+  (("C-c , r" . rspec-rerun))
   :config
   (setq rspec-primary-source-dirs '("app")))
 
+(use-package rbenv
+  :ensure t
+  :init (setq rbenv-show-active-ruby-in-modeline nil)
+  :config (progn
+            (global-rbenv-mode)
+            (add-hook 'enh-ruby-mode-hook 'rbenv-use-corresponding)))
+
+(use-package js2-mode
+  :ensure t
+  :init
+  (progn
+    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode)))
+  :config
+  (setq js2-basic-offset 2))
+
+(use-package web-mode
+  :ensure t
+  :defer t
+  :mode (("\\.erb\\'" . web-mode)
+         ("\\.html?\\'" . web-mode))
+  :config
+  (setq web-mode-enable-auto-pairing nil)
+  (sp-with-modes '(web-mode)
+    (sp-local-pair "%" "%"
+                   :unless '(sp-in-string-p)
+                   :post-handlers '(((lambda (&rest _ignored)
+                                       (just-one-space)
+                                       (save-excursion (insert " ")))
+                                     "SPC" "=" "#")))
+    (sp-local-tag "%" "<% "  " %>")
+    (sp-local-tag "=" "<%= " " %>")
+    (sp-local-tag "#" "<%# " " %>")))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -411,7 +464,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (region-bindings-mode multiple-cursors rainbow-identifiers color-identifiers-mode rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
+    (web-mode rbenv dumb-jump js2-mode xterm-color multi-term cliphist region-bindings-mode multiple-cursors rainbow-identifiers color-identifiers-mode rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
