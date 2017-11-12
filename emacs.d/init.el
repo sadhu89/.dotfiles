@@ -18,6 +18,10 @@
 ;; warn when opening files bigger than 100MB
 (setq large-file-warning-threshold 100000000)
 
+(defconst sadhu-savefile-dir (expand-file-name "savefile" user-emacs-directory))
+
+(desktop-save-mode 1)
+
 ;; the toolbar is just a waste of valuable screen estate
 ;; in a tty tool-bar-mode does not properly auto-load, and is
 ;; already disabled anyway
@@ -114,14 +118,10 @@
 (define-key 'help-command (kbd "C-i") #'info-display-manual)
 
 ;; smart tab behavior - indent or complete
-(setq tab-always-indent 'complete)
+;(setq tab-always-indent 'complete)
 
 ; don't ask for confirmation when opening symlinked file
 (setq vc-follow-symlinks t )
-
-; When you visit a file, point goes to the last place where it was
-; when you previously visited the same file.
-(save-place-mode 1)
 
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
@@ -166,21 +166,49 @@
 (setq use-package-verbose t)
 
 (use-package counsel
-  :ensure t
+  :ensure smex
   :config
   (ivy-mode 1)
   (setq ivy-use-virtual-buffers t)
-  (global-set-key "\C-s" 'swiper)
+  (setq counsel-grep-base-command
+ "rg -i -M 120 --no-heading --line-number --color never '%s' %s")
+  (global-set-key (kbd "C-r") 'swiper)
+  (global-set-key "\C-s" 'counsel-grep-or-swiper)
   (global-set-key (kbd "C-c C-r") 'ivy-resume)
   (global-set-key (kbd "<f6>") 'ivy-resume)
   (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "C-r") 'counsel-rg))
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file))
 
 (use-package doom-themes
   :ensure t
   :config
   (load-theme 'doom-one t))
+
+;; (use-package solarized-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'solarized-dark t))
+
+;; (use-package color-theme-sanityinc-tomorrow
+;;   :ensure t
+;;   :config
+;;   (load-theme 'sanityinc-tomorrow-eighties t))
+
+;; (use-package dracula-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'dracula t))
+
+;; (use-package monokai-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'monokai t))
+
+;; (use-package gruvbox-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'gruvbox-dark-medium t))
+
 
 (setq default-frame-alist '((font . "Source Code Pro-10")))
 ;; highlight the current line
@@ -196,6 +224,11 @@
 (use-package magit
   :ensure t
   :bind (("C-x g" . magit-status)))
+
+(use-package magithub
+  :ensure t
+  :after magit
+  :config (magithub-feature-autoinject t))
 
 (use-package projectile
   :ensure t
@@ -227,6 +260,11 @@
   :config
   (show-paren-mode +1))
 
+(use-package abbrev
+  :config
+  (setq save-abbrevs 'silently)
+  (setq-default abbrev-mode t))
+
 (use-package uniquify
   :config
   (setq uniquify-buffer-name-style 'forward)
@@ -236,17 +274,78 @@
   ;; don't muck with special buffers
   (setq uniquify-ignore-buffers-re "^\\*"))
 
-(use-package move-text
-  :ensure t
-  :bind
-  (([(meta shift up)] . move-text-up)
-   ([(meta shift down)] . move-text-down)))
+;; saveplace remembers your location in a file when saving files
+(use-package saveplace
+  :config
+  (setq save-place-file (expand-file-name "saveplace" sadhu-savefile-dir))
+  (save-place-mode 1))
+
+(use-package savehist
+  :config
+  (setq savehist-additional-variables
+        ;; search entries
+        '(search-ring regexp-search-ring)
+        ;; save every minute
+        savehist-autosave-interval 60
+        ;; keep the home clean
+        savehist-file (expand-file-name "savehist" sadhu-savefile-dir))
+  (savehist-mode +1))
+
+(use-package recentf
+  :config
+  (setq recentf-save-file (expand-file-name "recentf" sadhu-savefile-dir)
+        recentf-max-saved-items 500
+        recentf-max-menu-items 15
+        ;; disable recentf-cleanup on Emacs start, because it can cause
+        ;; problems with remote files
+        recentf-auto-cleanup 'never)
+  (recentf-mode +1))
 
 (use-package ace-window
   :ensure t
   :bind ("C-x o" . ace-window)
   :config
   (setq aw-scope 'frame))
+
+(use-package dired
+  :config
+  ;; dired - reuse current buffer by pressing 'a'
+  (put 'dired-find-alternate-file 'disabled nil)
+
+  ;; always delete and copy recursively
+  (setq dired-recursive-deletes 'always)
+  (setq dired-recursive-copies 'always)
+
+  ;; if there is a dired buffer displayed in the next window, use its
+  ;; current subdir, instead of the current subdir of this dired buffer
+  (setq dired-dwim-target t)
+
+  ;; enable some really cool extensions like C-x C-j(dired-jump)
+  (require 'dired-x))
+
+(use-package anzu
+  :ensure t
+  :bind (("M-%" . anzu-query-replace)
+         ("C-M-%" . anzu-query-replace-regexp))
+  :config
+  (global-anzu-mode))
+
+(use-package easy-kill
+  :ensure t
+  :config
+  (global-set-key [remap kill-ring-save] 'easy-kill))
+
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
+
+(use-package move-text
+  :ensure t
+  :bind
+  (([(meta shift up)] . move-text-up)
+   ([(meta shift down)] . move-text-down)))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -266,6 +365,93 @@
   :config
   (setq whitespace-line-column 80) ;; limit line length
   (setq whitespace-style '(face tabs empty trailing lines-tail)))
+
+;; (use-package enh-ruby-mode
+;;   :ensure t
+;;   :mode (("Appraisals\\'" . enh-ruby-mode)
+;;          ("\\(Rake\\|Thor\\|Guard\\|Gem\\|Cap\\|Vagrant\\|Berks\\|Pod\\|Puppet\\)file\\'" . enh-ruby-mode)
+;;          ("\\.\\(rb\\|rabl\\|ru\\|builder\\|rake\\|thor\\|gemspec\\|jbuilder\\)\\'" . enh-ruby-mode))
+;;   :interpreter "ruby"
+;;   :init
+;;   (progn
+;;     (setq enh-ruby-deep-indent-paren nil
+;;           enh-ruby-hanging-paren-deep-indent-level 2)))
+
+(use-package inf-ruby
+  :ensure t
+  :config
+  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
+  (add-hook 'ruby-mode-hook #'inf-ruby-minor-mode)
+  (add-hook 'compilation-filter-hook 'inf-ruby-auto-enter)
+  (setq company-global-modes '(not inf-ruby-mode)))
+
+(use-package rubocop
+  :ensure t
+  :config
+  (add-hook 'enh-ruby-mode-hook #'rubocop-mode)
+  (add-hook 'ruby-mode-hook #'rubocop-mode))
+
+(use-package rspec-mode
+  :ensure t
+  :bind*
+  (("C-c , r" . rspec-rerun))
+  :config
+  (setq rspec-primary-source-dirs '("app")))
+
+(use-package rbenv
+  :ensure t
+  :init (setq rbenv-show-active-ruby-in-modeline nil)
+  :config (progn
+            (global-rbenv-mode)
+            (add-hook 'enh-ruby-mode-hook 'rbenv-use-corresponding)))
+
+(use-package js2-mode
+  :ensure t
+  :init
+  (progn
+    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode)))
+  :config
+  (setq js2-basic-offset 2))
+
+(use-package web-mode
+  :ensure t
+  :defer t
+  :mode (("\\.erb\\'" . web-mode)
+         ("\\.html?\\'" . web-mode))
+  :config
+  (setq web-mode-enable-auto-pairing nil)
+  (sp-with-modes '(web-mode)
+    (sp-local-pair "%" "%"
+                   :unless '(sp-in-string-p)
+                   :post-handlers '(((lambda (&rest _ignored)
+                                       (just-one-space)
+                                       (save-excursion (insert " ")))
+                                     "SPC" "=" "#")))
+    (sp-local-tag "%" "<% "  " %>")
+    (sp-local-tag "=" "<%= " " %>")
+    (sp-local-tag "#" "<%# " " %>")))
+
+(use-package markdown-mode
+  :ensure t)
+
+(use-package yaml-mode
+  :ensure t)
+
+(use-package flycheck
+  :ensure t
+  :config
+  (add-hook 'after-init-hook #'global-flycheck-mode))
+
+(use-package flycheck-color-mode-line
+  :ensure t
+  :config
+  (add-hook 'flycheck-mode-hook 'flycheck-color-mode-line-mode))
+
+(use-package flycheck-pos-tip
+  :ensure t
+  :config
+  (eval-after-load 'flycheck
+    '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 
 (use-package diff-hl
   :ensure t
@@ -316,7 +502,8 @@
          ([(shift return)] . crux-smart-open-line)
          ([(control shift return)] . crux-smart-open-line-above)
          ([remap kill-whole-line] . crux-kill-whole-line)
-         ("C-c s" . crux-ispell-word-then-abbrev)))
+         ("C-c s" . crux-ispell-word-then-abbrev)
+         ("C-c b" . crux-switch-to-previous-buffer)))
 
 (use-package treemacs
   :ensure t
@@ -392,70 +579,6 @@
          ("M-g z" . dumb-jump-go-prefer-external-other-window))
   :config (setq dumb-jump-selector 'ivy))
 
-(use-package enh-ruby-mode
-  :ensure t
-  :mode (("Appraisals\\'" . enh-ruby-mode)
-         ("\\(Rake\\|Thor\\|Guard\\|Gem\\|Cap\\|Vagrant\\|Berks\\|Pod\\|Puppet\\)file\\'" . enh-ruby-mode)
-         ("\\.\\(rb\\|rabl\\|ru\\|builder\\|rake\\|thor\\|gemspec\\|jbuilder\\)\\'" . enh-ruby-mode))
-  :interpreter "ruby"
-  :init
-  (progn
-    (setq enh-ruby-deep-indent-paren nil
-          enh-ruby-hanging-paren-deep-indent-level 2)))
-
-(use-package inf-ruby
-  :ensure t
-  :config
-  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
-  (add-hook 'ruby-mode-hook #'inf-ruby-minor-mode)
-  (add-hook 'compilation-filter-hook 'inf-ruby-auto-enter)
-  (setq company-global-modes '(not inf-ruby-mode)))
-
-(use-package rubocop
-  :ensure t
-  :config
-  (add-hook 'enh-ruby-mode-hook #'inf-ruby-minor-mode)
-  (add-hook 'ruby-mode-hook #'inf-ruby-minor-mode))
-
-(use-package rspec-mode
-  :ensure t
-  :bind*
-  (("C-c , r" . rspec-rerun))
-  :config
-  (setq rspec-primary-source-dirs '("app")))
-
-(use-package rbenv
-  :ensure t
-  :init (setq rbenv-show-active-ruby-in-modeline nil)
-  :config (progn
-            (global-rbenv-mode)
-            (add-hook 'enh-ruby-mode-hook 'rbenv-use-corresponding)))
-
-(use-package js2-mode
-  :ensure t
-  :init
-  (progn
-    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode)))
-  :config
-  (setq js2-basic-offset 2))
-
-(use-package web-mode
-  :ensure t
-  :defer t
-  :mode (("\\.erb\\'" . web-mode)
-         ("\\.html?\\'" . web-mode))
-  :config
-  (setq web-mode-enable-auto-pairing nil)
-  (sp-with-modes '(web-mode)
-    (sp-local-pair "%" "%"
-                   :unless '(sp-in-string-p)
-                   :post-handlers '(((lambda (&rest _ignored)
-                                       (just-one-space)
-                                       (save-excursion (insert " ")))
-                                     "SPC" "=" "#")))
-    (sp-local-tag "%" "<% "  " %>")
-    (sp-local-tag "=" "<%= " " %>")
-    (sp-local-tag "#" "<%# " " %>")))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -464,7 +587,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (web-mode rbenv dumb-jump js2-mode xterm-color multi-term cliphist region-bindings-mode multiple-cursors rainbow-identifiers color-identifiers-mode rainbow-delimiters move-text undo-tree rspec-mode counsel-projectile crux which-key expand-region ripgrep projectile magit avy doom-themes counsel use-package))))
+    (smex exec-path-from-shell anzu zerodark-theme gruvbox-theme monokai-theme xterm-color which-key web-mode use-package undo-tree treemacs-projectile solarized-theme smartparens rubocop rspec-mode ripgrep region-bindings-mode rbenv rainbow-mode rainbow-identifiers rainbow-delimiters powerline multiple-cursors multi-term move-text moe-theme magithub js2-mode inf-ruby flycheck-pos-tip flycheck-color-mode-line expand-region enh-ruby-mode easy-kill dumb-jump dracula-theme doom-themes diff-hl crux counsel-projectile color-theme-sanityinc-tomorrow color-identifiers-mode cliphist))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
