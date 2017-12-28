@@ -20,7 +20,8 @@
 
 (defconst sadhu-savefile-dir (expand-file-name "savefile" user-emacs-directory))
 
-(desktop-save-mode 1)
+;; (desktop-save-mode 1)
+(winner-mode 1)
 
 ;; the toolbar is just a waste of valuable screen estate
 ;; in a tty tool-bar-mode does not properly auto-load, and is
@@ -179,6 +180,9 @@
   (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file))
 
+(use-package wgrep
+  :ensure t)
+
 (use-package doom-themes
   :ensure t
   :config
@@ -210,7 +214,7 @@
 ;;   (load-theme 'gruvbox-dark-medium t))
 
 
-(setq default-frame-alist '((font . "Source Code Pro-10")))
+(setq default-frame-alist '((font . "Source Code Pro-9")))
 ;; highlight the current line
 (global-hl-line-mode +1)
 
@@ -230,6 +234,9 @@
   :after magit
   :config (magithub-feature-autoinject t))
 
+(use-package github-browse-file
+  :ensure t)
+
 (use-package projectile
   :ensure t
   :diminish (projectile-mode . "Pjtl");; diminish projectile mode to
@@ -242,7 +249,9 @@
 
 (use-package counsel-projectile
   :ensure t
-  :bind* ("C-c p s" . counsel-projectile-rg))
+  :bind* ("C-c p s" . counsel-projectile-rg)
+  :init
+  (counsel-projectile-on))
 
 (use-package expand-region
   :ensure t
@@ -377,6 +386,9 @@
 ;;     (setq enh-ruby-deep-indent-paren nil
 ;;           enh-ruby-hanging-paren-deep-indent-level 2)))
 
+(use-package ruby-tools
+  :ensure t)
+
 (use-package inf-ruby
   :ensure t
   :config
@@ -396,6 +408,7 @@
   :bind*
   (("C-c , r" . rspec-rerun))
   :config
+  (setq compilation-scroll-output t)
   (setq rspec-primary-source-dirs '("app")))
 
 (use-package rbenv
@@ -430,6 +443,9 @@
     (sp-local-tag "%" "<% "  " %>")
     (sp-local-tag "=" "<%= " " %>")
     (sp-local-tag "#" "<%# " " %>")))
+
+(use-package haml-mode
+  :ensure t)
 
 (use-package markdown-mode
   :ensure t)
@@ -587,7 +603,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (smex exec-path-from-shell anzu zerodark-theme gruvbox-theme monokai-theme xterm-color which-key web-mode use-package undo-tree treemacs-projectile solarized-theme smartparens rubocop rspec-mode ripgrep region-bindings-mode rbenv rainbow-mode rainbow-identifiers rainbow-delimiters powerline multiple-cursors multi-term move-text moe-theme magithub js2-mode inf-ruby flycheck-pos-tip flycheck-color-mode-line expand-region enh-ruby-mode easy-kill dumb-jump dracula-theme doom-themes diff-hl crux counsel-projectile color-theme-sanityinc-tomorrow color-identifiers-mode cliphist))))
+    (ruby-tools wgrep github-browse-file github-browser-file haml-mode smex exec-path-from-shell anzu zerodark-theme gruvbox-theme monokai-theme xterm-color which-key web-mode use-package undo-tree treemacs-projectile solarized-theme smartparens rubocop rspec-mode ripgrep region-bindings-mode rbenv rainbow-mode rainbow-identifiers rainbow-delimiters powerline multiple-cursors multi-term move-text moe-theme magithub js2-mode inf-ruby flycheck-pos-tip flycheck-color-mode-line expand-region enh-ruby-mode easy-kill dumb-jump dracula-theme doom-themes diff-hl crux counsel-projectile color-theme-sanityinc-tomorrow color-identifiers-mode cliphist))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
